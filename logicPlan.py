@@ -50,6 +50,13 @@ def sentence1() -> Expr:
     (not A) or (not B) or C
     """
     "*** BEGIN YOUR CODE HERE ***"
+    A = Expr('A')
+    B = Expr('B')
+    C = Expr('C')
+    second = ~A%(~B|C)
+    third = disjoin(~A,~B,C)
+    First = disjoin(A,B)
+    return conjoin(First,second,third)
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
@@ -63,6 +70,15 @@ def sentence2() -> Expr:
     (not D) implies C
     """
     "*** BEGIN YOUR CODE HERE ***"
+    A = Expr('A')
+    B = Expr('B')
+    C = Expr('C')
+    D = Expr('D')
+    First = C%(B|D)
+    Second = A>>(~B & ~D)
+    Third = ~(B & ~C)>>A
+    Fourth = ~D>>C
+    return conjoin([First, Second, Third, Fourth])
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
@@ -80,6 +96,14 @@ def sentence3() -> Expr:
     Pacman is born at time 0.
     """
     "*** BEGIN YOUR CODE HERE ***"
+    PacmanAlive_0 = PropSymbolExpr('PacmanAlive_0')
+    PacmanAlive_1 = PropSymbolExpr('PacmanAlive_1')
+    PacmanBorn_0 = PropSymbolExpr('PacmanBorn_0')
+    PacmanKilled_0 = PropSymbolExpr('PacmanKilled_0')
+    First = PacmanAlive_1 % ((PacmanAlive_0 & ~PacmanKilled_0)|(~PacmanAlive_0&PacmanBorn_0))
+    Second = ~(PacmanAlive_0 & PacmanBorn_0)
+    Third = PacmanBorn_0
+    return conjoin(First, Second, Third)
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
@@ -97,6 +121,7 @@ def findModelUnderstandingCheck() -> Dict[Expr, bool]:
     a = Expr('A')
     "*** BEGIN YOUR CODE HERE ***"
     print("a.__dict__ is:", a.__dict__) # might be helpful for getting ideas
+    return Dict[a, True]
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
@@ -104,6 +129,9 @@ def entails(premise: Expr, conclusion: Expr) -> bool:
     """Returns True if the premise entails the conclusion and False otherwise.
     """
     "*** BEGIN YOUR CODE HERE ***"
+    if (findModel(premise)==findModel(conclusion)):
+        return True
+    return False
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
