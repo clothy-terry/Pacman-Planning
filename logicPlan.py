@@ -237,6 +237,7 @@ def pacmanSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[
         return None
     
     "*** BEGIN YOUR CODE HERE ***"
+    return PropSymbolExpr(pacman_str,x,y,time=now) % disjoin(possible_causes)
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
@@ -264,7 +265,8 @@ def SLAMSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[bo
     if not moved_causes:
         return None
 
-    moved_causes_sent: Expr = conjoin([~PropSymbolExpr(pacman_str, x, y, time=last) , ~PropSymbolExpr(wall_str, x, y), disjoin(moved_causes)])
+    moved_causes_sent: Expr = conjoin([~PropSymbolExpr(pacman_str, x, y, time=last) , 
+                                       ~PropSymbolExpr(wall_str, x, y), disjoin(moved_causes)])
 
     failed_move_causes: List[Expr] = [] # using merged variables, improves speed significantly
     auxilary_expression_definitions: List[Expr] = []
@@ -279,10 +281,12 @@ def SLAMSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[bo
         PropSymbolExpr(pacman_str, x, y, time=last),
         disjoin(failed_move_causes)])
 
-    return conjoin([PropSymbolExpr(pacman_str, x, y, time=now) % disjoin([moved_causes_sent, failed_move_causes_sent])] + auxilary_expression_definitions)
+    return conjoin([PropSymbolExpr(pacman_str, x, y, time=now) % 
+                    disjoin([moved_causes_sent, failed_move_causes_sent])] + auxilary_expression_definitions)
 
 
-def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: List[Tuple], walls_grid: List[List] = None, sensorModel: Callable = None, successorAxioms: Callable = None) -> Expr:
+def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: List[Tuple], 
+                     walls_grid: List[List] = None, sensorModel: Callable = None, successorAxioms: Callable = None) -> Expr:
     """
     Given:
         t: timestep
