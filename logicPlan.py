@@ -281,12 +281,10 @@ def SLAMSuccessorAxiomSingle(x: int, y: int, time: int, walls_grid: List[List[bo
         PropSymbolExpr(pacman_str, x, y, time=last),
         disjoin(failed_move_causes)])
 
-    return conjoin([PropSymbolExpr(pacman_str, x, y, time=now) % 
-                    disjoin([moved_causes_sent, failed_move_causes_sent])] + auxilary_expression_definitions)
+    return conjoin([PropSymbolExpr(pacman_str, x, y, time=now) % disjoin([moved_causes_sent, failed_move_causes_sent])] + auxilary_expression_definitions)
 
 
-def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: List[Tuple], 
-                     walls_grid: List[List] = None, sensorModel: Callable = None, successorAxioms: Callable = None) -> Expr:
+def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: List[Tuple], walls_grid: List[List] = None, sensorModel: Callable = None, successorAxioms: Callable = None) -> Expr:
     """
     Given:
         t: timestep
@@ -412,7 +410,27 @@ def positionLogicPlan(problem) -> List:
     KB = []
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    MAX_TIME = 50
+    KB = [PropSymbolExpr(pacman_str, x0, y0, time=0)]
+    loc_plan = []
+    one_loc = []
+    goal = [PropSymbolExpr(pacman_str, xg, yg)]
+    for t in range(MAX_TIME):
+        print(t)
+        if t > 0:
+            for (x,y) in all_coords:
+                if (x,y) in non_wall_coords:
+                    loc_plan += (x,y)
+            one_loc = exactlyOne(loc_plan)
+        if findModel(goal % KB):
+            model = findModel(goal % KB)
+            actions_sequence = extractActionSequence(model, actions)
+        actions_list = []
+        for action in actions:
+            
+        
+        
+        util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
