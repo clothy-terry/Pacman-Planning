@@ -371,7 +371,27 @@ def positionLogicPlan(problem) -> List:
     KB = []
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    MAX_TIME = 50
+    KB = [PropSymbolExpr(pacman_str, x0, y0, time=0)]
+    loc_plan = []
+    one_loc = []
+    goal = [PropSymbolExpr(pacman_str, xg, yg)]
+    for t in range(MAX_TIME):
+        print(t)
+        if t > 0:
+            for (x,y) in all_coords:
+                if (x,y) in non_wall_coords:
+                    loc_plan += (x,y)
+            one_loc = exactlyOne(loc_plan)
+        if findModel(goal % KB):
+            model = findModel(goal % KB)
+            actions_sequence = extractActionSequence(model, actions)
+        actions_list = []
+        for action in actions:
+            
+        
+        
+        util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
