@@ -312,6 +312,30 @@ def pacphysicsAxioms(t: int, all_coords: List[Tuple], non_outer_wall_coords: Lis
     pacphysics_sentences = []
 
     "*** BEGIN YOUR CODE HERE ***"
+    pacman_sq_sentences = []
+    action_sentences = []
+    #First
+    for each_coord in all_coords:
+        x = each_coord[0]
+        y = each_coord[1]
+        pacphysics_sentences.append(PropSymbolExpr(wall_str, x, y)>>~PropSymbolExpr(pacman_str, x, y, time=t))
+    #Second
+    for each_non_outer_coord in non_outer_wall_coords:
+        x = each_non_outer_coord[0]
+        y = each_non_outer_coord[1]
+        pacman_sq_sentences.append(PropSymbolExpr(pacman_str, x, y, time=t))
+    pacphysics_sentences.append(exactlyOne(pacman_sq_sentences))
+    #Third
+    for dic in DIRECTIONS:
+        action_sentences.append(PropSymbolExpr(dic, time=t))
+    pacphysics_sentences.append(exactlyOne(action_sentences))
+    #Fourth
+    if sensorModel!=None:
+        pacphysics_sentences.append(sensorModel(t, non_outer_wall_coords))
+    #Fifth
+    if walls_grid!=None and successorAxioms!=None and t!=0:
+        pacphysics_sentences.append(successorAxioms(t, walls_grid, non_outer_wall_coords))
+    return conjoin(pacphysics_sentences)
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
@@ -346,6 +370,21 @@ def checkLocationSatisfiability(x1_y1: Tuple[int, int], x0_y0: Tuple[int, int], 
     KB.append(conjoin(map_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
+    KB.append(pacphysicsAxioms(0, all_coords, non_outer_wall_coords, walls_grid, None, allLegalSuccessorAxioms))
+    KB.append(pacphysicsAxioms(1, all_coords, non_outer_wall_coords, walls_grid,
+                                None, allLegalSuccessorAxioms))
+    KB.append(PropSymbolExpr(pacman_str, x0, y0, time=0))
+    KB.append(PropSymbolExpr(action0, time=0))
+    KB.append(PropSymbolExpr(action1, time=1))
+    model1 = findModel(conjoin(KB) & PropSymbolExpr(pacman_str, x1, y1, time=1))
+    model2 = findModel(conjoin(KB) & ~PropSymbolExpr(pacman_str, x1, y1, time=1))
+    return (model1, model2)
+    
+    
+    #print(entails(conjoin(KB), PropSymbolExpr(pacman_str, x1, y1, time=1)))
+    #model1 = findModel(~(conjoin(KB)&~PropSymbolExpr(pacman_str, x1, y1, time=1)))
+    #if (entails(conjoin(KB), ~PropSymbolExpr(pacman_str, x1, y1, time=1))):
+    
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 

@@ -145,6 +145,16 @@ class PropSymbolExpr(Expr):
     Symbol name must begin with a capital letter. This class helps to add
     brackets with enumerated indices to the end of the name.
     """
+    # copied from logicPlan.py; preferably do this better
+    pacman_str = 'P'
+    food_str = 'FOOD'
+    wall_str = 'WALL'
+    DIRECTIONS = {'North', 'South', 'East', 'West'}
+    # rules
+    double_index = {pacman_str, food_str, wall_str}
+    time_index = {pacman_str, food_str} | DIRECTIONS
+    all_checked = double_index | time_index
+
     def __init__(self, sym_str: str, *index: Tuple[int], time: int = None):
         """Constructor taking a propositional logic symbol name and an optional set of index values,
         creating a symbol with the base name followed by brackets with the specific
@@ -163,16 +173,17 @@ class PropSymbolExpr(Expr):
         """
         if not is_prop_symbol(sym_str):
             raise SyntaxError("Unacceptable symbol base name (%s). Name must start with an upper-case alphabetic character that and is not TRUE or FALSE. Furthermore, only the following are allowed: capital and lower case alphabetic, 0-9, _, \",\", [, and ]." % sym_str)
-        # copied from logicPlan.py; preferably do this better
-        pacman_str = 'P'
-        food_str = 'FOOD'
-        wall_str = 'WALL'
-        if (sym_str == pacman_str or sym_str == food_str or sym_str == wall_str) and len(index) != 2:
-            raise SyntaxError("Unexpected " + sym_str + " Symbol. Was expecting 2 coordinates.")
-        if (sym_str == pacman_str or sym_str == food_str) and time == None:
-            raise SyntaxError("Unexpected " + sym_str + " Symbol. Was expecting time stamp.")
-        if sym_str == wall_str and time != None:
-            raise SyntaxError("Unexpected " + sym_str + " Symbol. Was expecting no time stamp.")
+        if sym_str in self.all_checked:
+            if sym_str in self.double_index:
+                if len(index) != 2:
+                    raise SyntaxError("Unexpected " + sym_str + " Symbol. Was expecting 2 coordinates.")
+            elif len(index) != 0:
+                raise SyntaxError("Unexpected " + sym_str + " Symbol. Was expecting 0 coordinates.")
+            if sym_str in self.time_index:
+                if time == None:
+                    raise SyntaxError("Unexpected " + sym_str + " Symbol. Was expecting time stamp.")
+            elif time != None:
+                raise SyntaxError("Unexpected " + sym_str + " Symbol. Was expecting no time stamp.")
         self.sym_str = sym_str
         self.indicies = index
         self.time = time
