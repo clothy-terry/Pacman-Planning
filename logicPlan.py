@@ -426,11 +426,11 @@ def positionLogicPlan(problem) -> List:
             model = findModel(goal % KB)
             actions_sequence = extractActionSequence(model, actions)
         actions_list = []
-        for action in actions:
+        
             
         
         
-        util.raiseNotDefined()
+    util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
 #______________________________________________________________________________
@@ -478,6 +478,40 @@ def localization(problem, agent) -> Generator:
     KB = []
 
     "*** BEGIN YOUR CODE HERE ***"
+    #Add to KB: where the walls are (walls_list) and aren’t (not in walls_list).
+    for each_coord in all_coords:
+        x = each_coord[0]
+        y = each_coord[1]
+        if each_coord in walls_list:
+            KB.append(PropSymbolExpr(wall_str, x, y))
+        else:
+            KB.append(~PropSymbolExpr(wall_str, x, y))
+    #############################################################################
+    for t in range(0, agent.num_timesteps):
+        #Add pacphysics, action, and percept information to KB.
+        KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid, sensorAxioms, allLegalSuccessorAxioms))
+        KB.append(PropSymbolExpr(agent.actions[t], time=t))#Prop? String? -1?
+        KB.append(fourBitPerceptRules(t, agent.getPercepts()))
+        #Find possible pacman locations with updated KB.
+        possible_locations = []
+        for each in non_outer_wall_coords:
+            x = each[0]
+            y = each[1]
+            proved_at : bool = entails(conjoin(KB), PropSymbolExpr(pacman_str, x, y, time=t))
+            proved_not_at : bool = entails(conjoin(KB), ~PropSymbolExpr(pacman_str, x, y, time=t))
+            possible_model = findModel(conjoin(KB) & PropSymbolExpr(pacman_str, x, y, time=t))
+            if proved_at:
+                KB.append(PropSymbolExpr(pacman_str, x, y, time=t))
+            if proved_not_at:
+                KB.append(~PropSymbolExpr(pacman_str, x, y, time=t))
+            if possible_model != False:
+                possible_locations.append((x,y))
+            #print(proved_at, possible_model!=False) #if True, False; then not correct because if proven to be true, then is possible
+            #print(proved_at and proved_not_at)# if True then conflict
+        agent.moveToNextState(agent.actions[t])
+        yield(possible_locations)
+
+
     util.raiseNotDefined()
 
     for t in range(agent.num_timesteps):
