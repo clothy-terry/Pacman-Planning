@@ -611,7 +611,6 @@ def mapping(problem, agent) -> Generator:
         for (x, y) in non_outer_wall_coords:
             wall : bool = entails(conjoin(KB), PropSymbolExpr(wall_str, x, y))
             #check if knowledge base entails that there's a wall at (x,y)
-
             no_wall : bool = entails(conjoin(KB), ~PropSymbolExpr(wall_str, x, y))
             #check if knowledge base entails that there's no wall at (x,y)
             if wall:                
@@ -665,10 +664,10 @@ def slam(problem, agent) -> Generator:
         KB.append(PropSymbolExpr(agent.actions[t], time=t))#Prop? String? -1?
         KB.append(numAdjWallsPerceptRules(t, agent.getPercepts()))
         #Find provable wall locations with updated KB.
+        possible_locations = []
         for (x, y) in non_outer_wall_coords:
             wall : bool = entails(conjoin(KB), PropSymbolExpr(wall_str, x, y))
             #check if knowledge base entails that there's a wall at (x,y)
-
             no_wall : bool = entails(conjoin(KB), ~PropSymbolExpr(wall_str, x, y))
             #check if knowledge base entails that there's no wall at (x,y)
             if wall:                
@@ -677,11 +676,7 @@ def slam(problem, agent) -> Generator:
             if no_wall:
                 KB.append(~PropSymbolExpr(wall_str, x, y))
                 known_map[x][y] = 0
-        #Find possible pacman locations with updated KB.
-        possible_locations = []
-        for each in non_outer_wall_coords:
-            x = each[0]
-            y = each[1]
+            #Find possible pacman locations with updated KB.
             proved_at : bool = entails(conjoin(KB), PropSymbolExpr(pacman_str, x, y, time=t))
             proved_not_at : bool = entails(conjoin(KB), ~PropSymbolExpr(pacman_str, x, y, time=t))
             possible_model = findModel(conjoin(KB) & PropSymbolExpr(pacman_str, x, y, time=t))
