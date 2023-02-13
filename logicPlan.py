@@ -655,19 +655,28 @@ def slam(problem, agent) -> Generator:
 
     "*** BEGIN YOUR CODE HERE ***"
     #Addinitial location to KB. Update known_map accordingly and add the appropriate expression to KB.
-    KB.append(PropSymbolExpr(pac_x_0, pac_y_0, time=0))
+    KB.append(PropSymbolExpr(pacman_str ,pac_x_0, pac_y_0, time=0))
     known_map[pac_x_0][pac_y_0] = 0 #open?
-    KB.append()#known map
+    KB.append(~PropSymbolExpr(wall_str, pac_x_0, pac_y_0))
     for t in range(agent.num_timesteps):
         #Add pacphysics, action, and percept information to KB.
-        KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid, #known_map?
+        KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, known_map, 
                                    SLAMSensorAxioms, SLAMSuccessorAxioms))
         KB.append(PropSymbolExpr(agent.actions[t], time=t))#Prop? String? -1?
         KB.append(numAdjWallsPerceptRules(t, agent.getPercepts()))
         #Find provable wall locations with updated KB.
+        for (x, y) in non_outer_wall_coords:
+            wall : bool = entails(conjoin(KB), PropSymbolExpr(wall_str, x, y))
+            #check if knowledge base entails that there's a wall at (x,y)
 
-
-
+            no_wall : bool = entails(conjoin(KB), ~PropSymbolExpr(wall_str, x, y))
+            #check if knowledge base entails that there's no wall at (x,y)
+            if wall:                
+                KB.append(PropSymbolExpr(wall_str, x, y))
+                known_map[x][y] = 1
+            if no_wall:
+                KB.append(~PropSymbolExpr(wall_str, x, y))
+                known_map[x][y] = 0
         #Find possible pacman locations with updated KB.
         possible_locations = []
         for each in non_outer_wall_coords:
