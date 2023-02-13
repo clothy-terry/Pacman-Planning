@@ -190,7 +190,7 @@ def atMostOne(literals: List[Expr]) -> Expr:
     for i in range(0, len(literals)):
         for j in range(i+1, len(literals)):
             cur.append(~literals[i]|~literals[j])
-    return conjoin(cur)
+    return conjoin(*cur)
 
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
@@ -412,24 +412,27 @@ def positionLogicPlan(problem) -> List:
     "*** BEGIN YOUR CODE HERE ***"
     MAX_TIME = 50
     KB = [PropSymbolExpr(pacman_str, x0, y0, time=0)]
-    loc_plan = []
-    one_loc = []
-    goal = [PropSymbolExpr(pacman_str, xg, yg)]
     for t in range(MAX_TIME):
         print(t)
-        if t > 0:
-            for (x,y) in all_coords:
-                if (x,y) in non_wall_coords:
-                    loc_plan += (x,y)
-            one_loc = exactlyOne(loc_plan)
-        if findModel(goal % KB):
-            model = findModel(goal % KB)
-            actions_sequence = extractActionSequence(model, actions)
-        actions_list = []
-        
-            
-        
-        
+        if t >= 0:
+            init_knowledge = []
+            for (x,y) in non_wall_coords:
+                init_knowledge.append(PropSymbolExpr(pacman_str, x, y, time=t))
+            init_knowledge = exactlyOne(init_knowledge)
+            KB.append(init_knowledge)
+            goal = PropSymbolExpr(pacman_str, xg, yg, time=t)
+            valid_model = findModel(conjoin(KB) & goal)
+            if valid_model:
+                return extractActionSequence(valid_model, actions)
+            action_list = []
+            for action in actions:
+                action_list.append(PropSymbolExpr(action, time=t))
+            action_list = exactlyOne(action_list)
+            KB.append(action_list)
+            successors = []
+            for (x, y) in non_wall_coords:
+                successors = pacmanSuccessorAxiomSingle(x,y,t+1,walls_grid)
+                KB.append(successors)
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
@@ -459,6 +462,46 @@ def foodLogicPlan(problem) -> List:
     KB = []
 
     "*** BEGIN YOUR CODE HERE ***"
+    KB.append(PropSymbolExpr(pacman_str, x0, y0, time=0))
+    for (x, y) in food:
+        KB.append(PropSymbolExpr(food_str, x, y, time=0))
+    MAX_TIME = 50
+    for t in range(MAX_TIME):
+        print(t)
+        if t >= 0:
+            init_knowledge = []
+            for (x,y) in non_wall_coords:
+                init_knowledge.append(PropSymbolExpr(pacman_str, x, y, time=t))
+            init_knowledge = exactlyOne(init_knowledge)
+            KB.append(init_knowledge)
+
+            goal = []
+            for (x, y) in food:
+                goal.append(~PropSymbolExpr(food_str, x, y, time=t))
+            sentence = KB + goal
+            valid_model = findModel(conjoin(sentence))
+            if valid_model:
+                return extractActionSequence(valid_model, actions)
+
+            action_list = []
+            for action in actions:
+                action_list.append(PropSymbolExpr(action, time=t))
+            action_list = exactlyOne(action_list)
+            KB.append(action_list)
+
+            successors = []
+            for (x, y) in non_wall_coords:
+                successors = pacmanSuccessorAxiomSingle(x,y,t+1,walls)
+                KB.append(successors)
+            
+            #food successor axiom
+            for (x, y) in food:
+                eat_food = (PropSymbolExpr(food_str, x, y, time=t) & PropSymbolExpr(pacman_str, x, y, time=t))
+                no_food_next = (~PropSymbolExpr(food_str, x, y, time=t+1))
+                KB.append(eat_food>>no_food_next)
+                not_eat_food = (PropSymbolExpr(food_str, x, y, time=t) & (~PropSymbolExpr(pacman_str, x, y, time=t)))
+                food_next = (PropSymbolExpr(food_str, x, y, time=t+1))
+                KB.append(not_eat_food>>food_next)
     util.raiseNotDefined()
     "*** END YOUR CODE HERE ***"
 
@@ -544,8 +587,8 @@ def mapping(problem, agent) -> Generator:
     KB.append(conjoin(outer_wall_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    KB.append(PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time=0))
+    KB.append(~PropSymbolExpr(pacman_str, pac_x_0, pac_y_0))
     for t in range(agent.num_timesteps):
         "*** END YOUR CODE HERE ***"
         yield known_map
