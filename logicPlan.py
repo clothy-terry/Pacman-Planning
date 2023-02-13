@@ -619,11 +619,40 @@ def slam(problem, agent) -> Generator:
     KB.append(conjoin(outer_wall_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    #Addinitial location to KB. Update known_map accordingly and add the appropriate expression to KB.
+    KB.append(PropSymbolExpr(pac_x_0, pac_y_0, time=0))
+    known_map[pac_x_0][pac_y_0] = 0 #open?
+    KB.append()#known map
     for t in range(agent.num_timesteps):
+        #Add pacphysics, action, and percept information to KB.
+        KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, walls_grid, #known_map?
+                                   SLAMSensorAxioms, SLAMSuccessorAxioms))
+        KB.append(PropSymbolExpr(agent.actions[t], time=t))#Prop? String? -1?
+        KB.append(numAdjWallsPerceptRules(t, agent.getPercepts()))
+        #Find provable wall locations with updated KB.
+
+
+
+        #Find possible pacman locations with updated KB.
+        possible_locations = []
+        for each in non_outer_wall_coords:
+            x = each[0]
+            y = each[1]
+            proved_at : bool = entails(conjoin(KB), PropSymbolExpr(pacman_str, x, y, time=t))
+            proved_not_at : bool = entails(conjoin(KB), ~PropSymbolExpr(pacman_str, x, y, time=t))
+            possible_model = findModel(conjoin(KB) & PropSymbolExpr(pacman_str, x, y, time=t))
+            if proved_at:
+                KB.append(PropSymbolExpr(pacman_str, x, y, time=t))
+            if proved_not_at:
+                KB.append(~PropSymbolExpr(pacman_str, x, y, time=t))
+            if possible_model != False:
+                possible_locations.append((x,y))
+            #print(proved_at, possible_model!=False) #if True, False; then not correct because if proven to be true, then is possible
+            #print(proved_at and proved_not_at)# if True then conflict
+        agent.moveToNextState(agent.actions[t])
         "*** END YOUR CODE HERE ***"
         yield (known_map, possible_locations)
+    util.raiseNotDefined()
 
 
 # Abbreviations
