@@ -553,8 +553,8 @@ def mapping(problem, agent) -> Generator:
     KB.append(conjoin(outer_wall_sent))
 
     "*** BEGIN YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    KB.append(PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time=0))
+    KB.append(~PropSymbolExpr(pacman_str, pac_x_0, pac_y_0))
     for t in range(agent.num_timesteps):
         "*** END YOUR CODE HERE ***"
         yield known_map
