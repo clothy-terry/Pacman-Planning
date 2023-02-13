@@ -415,23 +415,27 @@ def positionLogicPlan(problem) -> List:
     for t in range(MAX_TIME):
         print(t)
         if t >= 0:
+            #Pacman can only be at ExactlyOne of all possible locations
             init_knowledge = []
             for (x,y) in non_wall_coords:
                 init_knowledge.append(PropSymbolExpr(pacman_str, x, y, time=t))
             init_knowledge = exactlyOne(init_knowledge)
             KB.append(init_knowledge)
-            
+
+            #Goal Assertion -> Find action sequence
             goal = PropSymbolExpr(pacman_str, xg, yg, time=t)
             valid_model = findModel(conjoin(KB) & goal)
             if valid_model:
                 return extractActionSequence(valid_model, actions)
 
+            #Pacman can only take ExactlyOne action at timestep t
             action_list = []
             for action in actions:
                 action_list.append(PropSymbolExpr(action, time=t))
             action_list = exactlyOne(action_list)
             KB.append(action_list)
 
+            #Find successors of Pacman at timestep t
             successors = []
             for (x, y) in non_wall_coords:
                 successors = pacmanSuccessorAxiomSingle(x,y,t+1,walls_grid)
@@ -472,12 +476,16 @@ def foodLogicPlan(problem) -> List:
     for t in range(MAX_TIME):
         print(t)
         if t >= 0:
+
+            #Add to KB: Initial knowledge: Pacman can only be at exactlyOne 
+            #of the locations in non_wall_coords at timestep t
             init_knowledge = []
             for (x,y) in non_wall_coords:
                 init_knowledge.append(PropSymbolExpr(pacman_str, x, y, time=t))
             init_knowledge = exactlyOne(init_knowledge)
             KB.append(init_knowledge)
 
+            #Goal assertion -> return a list of actions
             goal = []
             for (x, y) in food:
                 goal.append(~PropSymbolExpr(food_str, x, y, time=t))
@@ -485,13 +493,16 @@ def foodLogicPlan(problem) -> List:
             valid_model = findModel(conjoin(sentence))
             if valid_model:
                 return extractActionSequence(valid_model, actions)
-
+            
+            #Add to KB: Pacman takes exactly one action per timestep.
             action_list = []
             for action in actions:
                 action_list.append(PropSymbolExpr(action, time=t))
             action_list = exactlyOne(action_list)
             KB.append(action_list)
 
+            #Add to KB: Transition Model sentences: call pacmanSuccessorAxiomSingle(...) 
+            #for all possible pacman positions in non_wall_coords
             successors = []
             for (x, y) in non_wall_coords:
                 successors = pacmanSuccessorAxiomSingle(x,y,t+1,walls)
@@ -591,10 +602,31 @@ def mapping(problem, agent) -> Generator:
 
     "*** BEGIN YOUR CODE HERE ***"
     KB.append(PropSymbolExpr(pacman_str, pac_x_0, pac_y_0, time=0))
-    KB.append(~PropSymbolExpr(pacman_str, pac_x_0, pac_y_0))
+    KB.append(~PropSymbolExpr(wall_str, pac_x_0, pac_y_0))
     for t in range(agent.num_timesteps):
-        "*** END YOUR CODE HERE ***"
+        #Add Pacphysics, actions, and percepts to KB
+        KB.append(pacphysicsAxioms(t, all_coords, non_outer_wall_coords, known_map, sensorAxioms, allLegalSuccessorAxioms))
+        KB.append(PropSymbolExpr(agent.actions[t], time=t))
+        KB.append(fourBitPerceptRules(t, agent.getPercepts()))
+        for (x, y) in non_outer_wall_coords:
+            wall : bool = entails(conjoin(KB), PropSymbolExpr(wall_str, x, y))
+            #check if knowledge base entails that there's a wall at (x,y)
+
+            no_wall : bool = entails(conjoin(KB), ~PropSymbolExpr(wall_str, x, y))
+            #check if knowledge base entails that there's no wall at (x,y)
+            if wall:                
+                KB.append(PropSymbolExpr(wall_str, x, y))
+                known_map[x][y] = 1
+            if no_wall:
+                KB.append(~PropSymbolExpr(wall_str, x, y))
+                known_map[x][y] = 0
+            #add to KB, 1 means wall, 0 means no wall
+        
+        agent.moveToNextState(agent.actions[t])
         yield known_map
+    "*** END YOUR CODE HERE ***"
+
+
 
 #______________________________________________________________________________
 # QUESTION 8
